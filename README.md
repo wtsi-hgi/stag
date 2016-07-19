@@ -21,27 +21,89 @@ sources (e.g., files), by specifying as such in the `stag` statement.
 
 ## `stag` Language
 
-    statement := [pk_list]
-                 [from_clause]
-                 [split_clause]
-                 "into" out_list
-                 [when_clause]
+    statement     = [ pk_list ]
+                    [ from_clause ]
+                    [ split_clause ]
+                    "into" out_list
+                    [ when_clause ]
 
-    pk_list := col_id+
+    pk_list       = 1*col_id
 
-    from_clause := "from" <filename>
+    from_clause   = "from" ( filepath / fd )
 
-    split_clause := "split by" /<regular expression>/
+    split_clause  = "split by" regex
 
-    out_list := (col_id ["as" <alias>])+
+    out_list      = 1*( aggregate_col [ alias ] )
+                    *( col_id [ alias ] )
+    
+    when_clause   = "when" condition
 
-    when_clause := <conditions...>
+    condition     = logic_block / "(" logic_block ")"
 
-(n.b., `out_list` must contain at least one aggregate function)
+    logic_block   = predicate *( junction condition )
 
-## Examples
+    predicate     = [ "not" ] col_id comparitor ( col_id / LITERAL )
 
-[Examples here]
+    junction      = "and" / "or"
+
+    comparitor    = "=" / "<" / ">" / "<=" / ">=" / "!=" / "~="
+
+    aggregate_col = AGGREGATOR "(" col_id ")"
+
+    col_id        = "$" 1*DIGIT
+                  ; 1-indexed, $0 matches the whole record
+
+    alias         = "as" STRING
+
+    regex         = "/" REGEX "/"
+
+    filepath      = STRING
+
+    fd            = "&" 1*DIGIT
+
+    AGGREGATOR    = "sum" / "count" / "mean" / "stdev" / "max" / "min"
+                  ; others?...
+
+    ; The following are not yet well-defined...
+
+    REGEX         = <PCRE definition>
+
+    STRING        = <Keyword or quoted string>
+
+    LITERAL       = <Duck-typed literal>
+
+Note that the `out_list` must contain at least one aggregated column,
+however the order doesn't matter (contrary to the above definition).
+
+If primary keys are not specified (i.e., `pk_list` omitted) then all
+non-aggregated columns in `out_list` are considered to be keys.
+
+If the `from_clause` is omitted, then it defaults to `from &0` (i.e.,
+read from stdin).
+
+If the `split_clause` is omitted, then it defaults to
+`split by /\t|\s{2,}/` (i.e., split on tabs or two-or-more whitespaces).
+
+The `~=` operator is for regular expression matches.
+
+## Example
+
+Let's say your input looks like this:
+
+    [Timestamp]  [IP Address]  [Some message]
+
+Then the following:
+
+    stag '$2 into $2 max($1) as "Latest" when not $2 = "127.0.0.1"'
+
+Would show the latest hit, by IP address, for any non-local connection.
+
+Alternatively, if you have some text file named `foo.txt`, the following
+will have the same result as `wc -l`:
+
+    stag 'from foo.txt into count($0)'
+
+[Think of better examples!...]
 
 ## License
 
