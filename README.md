@@ -18,73 +18,127 @@ statement can be loaded from file using the `-f` option.
 By default, `stag` reads from standard input and would probably be used
 as part of a Unix pipeline. It can be used to read from different
 sources (e.g., files), by specifying as such in the `stag` statement.
+`stag` will run until its input's EOF is reached, or it is terminated
+with Ctrl+D.
 
 ## `stag` Language
 
-    statement     = [ pk_list ]
-                    [ from_clause ]
-                    [ split_clause ]
-                    "into" out_list
-                    [ when_clause ]
+A `stag` statement is not dissimilar to an SQL `select ... group by ...`
+statement. The grammar is defined using the following ABNF (per
+RFC5234):
 
-    pk_list       = 1*col_id
+    ;; stag Statement
 
-    from_clause   = "from" ( filepath / fd )
+    statement        = [ from-clause ]
+                       [ split-clause ]
+                       "into" out-list
+                       [ when-clause ]
 
-    split_clause  = "split by" regex
+    ;; From Clause
 
-    out_list      = 1*( aggregate_col [ alias ] )
-                    *( col_id [ alias ] )
-    
-    when_clause   = "when" condition
+    from-clause      = "from" ( filepath / fd )
+  
+    filepath         = string-literal
 
-    condition     = logic_block / "(" logic_block ")"
+    fd               = "&" 1*DIGIT
 
-    logic_block   = predicate *( junction condition )
+    ;; Split By Clause
 
-    predicate     = [ "not" ] col_id comparitor ( col_id / LITERAL )
+    split-clause     = "split by" regex-literal
 
-    junction      = "and" / "or"
+    ;; Output List
 
-    comparitor    = "=" / "<" / ">" / "<=" / ">=" / "!=" / "~="
+    out-list         = 1*( expression [ alias ] )
 
-    aggregate_col = AGGREGATOR "(" col_id ")"
+    alias            = "as" string-literal 
 
-    col_id        = "$" 1*DIGIT
-                  ; 1-indexed, $0 matches the whole record
+    expression       = expr-block / "(" expr-block ")"
 
-    alias         = "as" STRING
+    expr-block       = data
+                     / literal
+                     / prefix-fn 1*expression  ; per function arity
+                     / expression infix-fn expression
 
-    regex         = "/" REGEX "/"
+    prefix-fn        = <Registered Functions and Aggregators>
 
-    filepath      = STRING
+    infix-fn         = "+" / "-" / "*" / "/"
+                     ; Others? Bitwise operators; exponention; etc...
 
-    fd            = "&" 1*DIGIT
+    ;; When Clause
 
-    AGGREGATOR    = "sum" / "count" / "mean" / "stdev" / "max" / "min"
-                  ; others?...
+    when-clause      = "when" condition
 
-    ; The following are not yet well-defined...
+    condition        = logic-block / "(" logic-block ")"
 
-    REGEX         = <PCRE definition>
+    logic-block      = predicate *( junction condition )
 
-    STRING        = <Keyword or quoted string>
+    junction         = "and" / "or"
 
-    LITERAL       = <Duck-typed literal>
+    predicate        = [ "not" ] expression test
 
-Note that the `out_list` must contain at least one aggregated column,
-however the order doesn't matter (contrary to the above definition).
+    test             = ( "=" / "<" / ">" / "<=" / ">=" / "!=" ) expression
+                     / "in" "(" 1*expression ")"
+                     / "~=" regex-literal
 
-If primary keys are not specified (i.e., `pk_list` omitted) then all
-non-aggregated columns in `out_list` are considered to be keys.
+    ;; Data References
 
-If the `from_clause` is omitted, then it defaults to `from &0` (i.e.,
-read from stdin).
+    data             = col-id / record
 
-If the `split_clause` is omitted, then it defaults to
-`split by /\t|\s{2,}/` (i.e., split on tabs or two-or-more whitespaces).
+    col-id           = "$" 1*DIGIT  ; 1-indexed
 
-The `~=` operator is for regular expression matches.
+    record           = "$0"
+
+    ;; Literals
+
+    literal          = numeric-literal / string-literal / datetime-literal / regex-literal
+
+    numeric-literal  = number [ "e" number ]
+
+    number           = integer [ "." 1*DIGIT ]
+
+    integer          = [ "-" ] 1*DIGIT
+
+    string-literal   = DQUOTE <Escaped String> DQUOTE
+
+    datetime-literal = DQUOTE <Timestamp per RFC3339> DQUOTE
+
+    regex-literal    = "/" <PCRE Definition> "/"
+
+    ;; Miscellaneous
+
+    comment          = "#" <Everything until EOL>
+
+    escaping         = "\" ( "n" \ "t" \ "\" \ "r" \ DQUOTE \ "u" 2*6HEXDIG )
+
+A more complete description can [one day] be found in the documentation.
+
+Notes:
+
+* The `out-list` must contain at least one aggregation function,
+  appropriately applied.
+
+* If primary keys are not specified (i.e., `pk-list` omitted) then all
+  non-aggregated columns in `out-list` are considered to be keys. [Is
+  this a good idea? Are there instances where we need to be explicit
+  about the grouping columns?...]
+
+* If the `from-clause` is omitted, then it defaults to `from &0` (i.e.,
+  read from stdin).
+
+* If the `split-clause` is omitted, then it defaults to
+  `split by /\t|\s{2,}/` (i.e., split on tabs or two-or-more
+  whitespaces).
+
+* Date/time stamps are per RFC3339, using any of the rules: `date-time`,
+  `full-time`, `partial-time` or `full-date`.
+
+* All column data comes in as a string, but duck typed when used in,
+  say, a comparator according to the literal. [Write up how type
+  coercion should work...]
+
+* [Note about having to use brackets when there's ambiguity in the
+  parse, because there are no delimiters... Should there be
+  delimiters?...]
 
 ## Example
 
@@ -94,16 +148,25 @@ Let's say your input looks like this:
 
 Then the following:
 
-    stag '$2 into $2 max($1) as "Latest" when not $2 = "127.0.0.1"'
+    stag 'into $2 max $1 as "Latest" when not $2 = "127.0.0.1"'
 
-Would show the latest hit, by IP address, for any non-local connection.
+Would show the latest hit timestamp, by IP address, for any non-local
+connection. Or, say, if you wanted to see the total hit count bucketed
+by hour:
+
+    stag 'into hour $1 as "Hour" sum $2 as "Hits"'
+
+Note that the primary key list has been omitted as it can be derived
+from the output list. [See note above, re this being a good idea!]
 
 Alternatively, if you have some text file named `foo.txt`, the following
 will have the same result as `wc -l`:
 
-    stag 'from foo.txt into count($0)'
+    stag 'from "foo.txt" into count $0'
 
-[Think of better examples!...]
+[Think of more/better examples!... Better yet, acquire potential use
+cases and see if the language is sufficiently expressive to fulfil their
+requirements...]
 
 ## License
 
