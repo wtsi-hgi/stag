@@ -21,6 +21,13 @@ sources (e.g., files), by specifying as such in the `stag` statement.
 `stag` will run until its input's EOF is reached, or it is terminated
 with Ctrl+D.
 
+`stag` expects records to be EOL delimited (i.e., record-per-line), with
+no additional "decoration" around records or fields. If that is not the
+case, `sed` could be interposed to munge the input into the correct
+format (for example, if parsing a CSV file, `sed` could strip leading
+and trailing quotes, if any, and `stag`'s field separator could be set
+to `/"?,"?/`).
+
 ## `stag` Language
 
 A `stag` statement is not dissimilar to an SQL `select ... group by ...`
@@ -29,10 +36,16 @@ RFC5234):
 
     ;; stag Statement
 
-    statement        = [ from-clause ]
+    statement        = [ pk-list ]
+                       [ from-clause ]
                        [ split-clause ]
                        "into" out-list
                        [ when-clause ]
+
+    ;; Primary Key List
+    ;; Do we need this at all? Can we always derive it from out-list?
+
+    pk-list          = 1*col-id 
 
     ;; From Clause
 
