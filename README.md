@@ -54,10 +54,10 @@ RFC5234):
                      / prefix-fn 1*expression  ; per function arity
                      / expression infix-fn expression
 
-    prefix-fn        = <Registered Functions and Aggregators>
+    prefix-fn        = <Registered Scalar and Aggregation Functions>
 
-    infix-fn         = "+" / "-" / "*" / "/"
-                     ; Others? Bitwise operators; exponention; etc...
+    infix-fn         = <Registered Infix Functions>
+                     ; Arithmetic and the like...
 
     ;; From Clause
 
@@ -121,6 +121,12 @@ RFC5234):
 
     escaping         = "\" ( "n" \ "t" \ "\" \ "r" \ DQUOTE \ "u" 2*6HEXDIG )
 
+    ; Prefix functions must be symbols, but not reserved words
+    ; Symbols are case-sensitive; reserved words are not
+    symbol_literal   = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
+
+    reserved_words   = "as" / "from" / "split by" / "when" / "and" / "or" / "in" / "using"
+
 A more complete description can [one day] be found in the documentation.
 
 Notes:
@@ -149,22 +155,23 @@ Notes:
 
 * [Note about having to use brackets when there's ambiguity in the
   parse, because there are no delimiters... Should there be
-  delimiters?...]
+  delimiters?... Need binding precedence rules, if not...]
 
 * There is no equivalent of the SQL `having` clause as `stag` is
-  designed for interactive use. However, at EOF, something like `awk`
-  could easily be appended to the pipeline to filter the aggregated
-  data.
+  designed for interactive use, inasmuch as it provides a live
+  aggregation of the stream. If, however, it is a non-terminal element
+  of a pipeline -- and the stream terminates -- something like `awk`
+  could be used to provide such post-aggregation filtering.
 
 * The extension clause allows the definition of custom scalar and
-  aggregate functions, imported from an external source files. [Custom
+  aggregation functions, imported from an external source files. [Custom
   functions should be written in Racket?]
 
 ### Scalar Functions
 
 ...
 
-### Aggregate Functions
+### Aggregation Functions
 
 ...
 
