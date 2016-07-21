@@ -17,9 +17,8 @@ statement can be loaded from file using the `-f` option.
 
 By default, `stag` reads from standard input and would probably be used
 as part of a Unix pipeline. It can be used to read from different
-sources (e.g., files), by specifying as such in the `stag` statement.
-`stag` will run until its input's EOF is reached, or it is terminated
-with Ctrl+D.
+sources, by specifying as such in the `stag` statement. `stag` will run
+until its input's EOF is reached, or it is terminated with Ctrl+D.
 
 `stag` expects records to be EOL delimited (i.e., record-per-line), with
 no additional "decoration" around records or fields. If that is not the
@@ -36,28 +35,11 @@ RFC5234):
 
     ;; stag Statement
 
-    statement        = [ pk-list ]
+    statement        = out-list
                        [ from-clause ]
                        [ split-clause ]
-                       "into" out-list
                        [ when-clause ]
-
-    ;; Primary Key List
-    ;; Do we need this at all? Can we always derive it from out-list?
-
-    pk-list          = 1*col-id 
-
-    ;; From Clause
-
-    from-clause      = "from" ( filepath / fd )
-  
-    filepath         = string-literal
-
-    fd               = "&" 1*DIGIT
-
-    ;; Split By Clause
-
-    split-clause     = "split by" regex-literal
+                       [ extend-clause ]
 
     ;; Output List
 
@@ -77,6 +59,18 @@ RFC5234):
     infix-fn         = "+" / "-" / "*" / "/"
                      ; Others? Bitwise operators; exponention; etc...
 
+    ;; From Clause
+
+    from-clause      = "from" ( filepath / fd )
+  
+    filepath         = string-literal
+
+    fd               = "&" 1*DIGIT
+
+    ;; Split By Clause
+
+    split-clause     = "split by" regex-literal
+
     ;; When Clause
 
     when-clause      = "when" condition
@@ -92,6 +86,10 @@ RFC5234):
     test             = ( "=" / "<" / ">" / "<=" / ">=" / "!=" ) expression
                      / "in" "(" 1*expression ")"
                      / "~=" regex-literal
+
+    ;; Extension Clause
+
+    extend-clause    = "using" 1*filepath
 
     ;; Data References
 
@@ -130,10 +128,10 @@ Notes:
 * The `out-list` must contain at least one aggregation function,
   appropriately applied.
 
-* If primary keys are not specified (i.e., `pk-list` omitted) then all
-  non-aggregated columns in `out-list` are considered to be keys. [Is
-  this a good idea? Are there instances where we need to be explicit
-  about the grouping columns?...]
+* Unlike SQL, there is no `group by` clause, as this can be inferred
+  from the `out-list`. If scalar columns form part of the `out-list`
+  then these define the grouping tuple; otherwise, aggregation will be
+  applied to all records.
 
 * If the `from-clause` is omitted, then it defaults to `from &0` (i.e.,
   read from stdin).
@@ -153,6 +151,23 @@ Notes:
   parse, because there are no delimiters... Should there be
   delimiters?...]
 
+* There is no equivalent of the SQL `having` clause as `stag` is
+  designed for interactive use. However, at EOF, something like `awk`
+  could easily be appended to the pipeline to filter the aggregated
+  data.
+
+* The extension clause allows the definition of custom scalar and
+  aggregate functions, imported from an external source files. [Custom
+  functions should be written in Racket?]
+
+### Scalar Functions
+
+...
+
+### Aggregate Functions
+
+...
+
 ## Example
 
 Let's say your input looks like this:
@@ -161,21 +176,18 @@ Let's say your input looks like this:
 
 Then the following:
 
-    stag 'into $2 max $1 as "Latest" when not $2 = "127.0.0.1"'
+    stag '$2 max $1 as "Latest" when not $2 = "127.0.0.1"'
 
 Would show the latest hit timestamp, by IP address, for any non-local
 connection. Or, say, if you wanted to see the total hit count bucketed
 by hour:
 
-    stag 'into hour $1 as "Hour" sum $2 as "Hits"'
-
-Note that the primary key list has been omitted as it can be derived
-from the output list. [See note above, re this being a good idea!]
+    stag 'extract_hour $1 as "Hour" sum $2 as "Hits"'
 
 Alternatively, if you have some text file named `foo.txt`, the following
 will have the same result as `wc -l`:
 
-    stag 'from "foo.txt" into count $0'
+    stag 'count $0 from "foo.txt"'
 
 [Think of more/better examples!... Better yet, acquire potential use
 cases and see if the language is sufficiently expressive to fulfil their
