@@ -39,11 +39,14 @@ RFC5234):
                        [ from-clause ]
                        [ split-clause ]
                        [ when-clause ]
+                       [ sort-clause ]
                        [ extend-clause ]
 
     ;; Output List
 
-    out-list         = 1*( expression [ alias ] )
+    out-list         = out-column *( "," out-column )
+
+    out-column       = expression [ alias ]
 
     alias            = "as" string-literal 
 
@@ -51,13 +54,15 @@ RFC5234):
 
     expr-block       = data
                      / literal
-                     / prefix-fn 1*expression  ; per function arity
+                     / prefix-fn
                      / expression infix-fn expression
 
-    prefix-fn        = <Registered Scalar and Aggregation Functions>
+    prefix-fn        = symbol_literal "(" [ arg_list ] ")"
 
-    infix-fn         = <Registered Infix Functions>
-                     ; Arithmetic and the like...
+    arg-list         = expression *( "," expression )
+
+    infix-fn         = "+"  ; Addition / Concatenation
+                     / "-" / "*" / "/" / "%" / "^"  ; Arithmetic
 
     ;; From Clause
 
@@ -84,8 +89,16 @@ RFC5234):
     predicate        = [ "not" ] expression test
 
     test             = ( "=" / "<" / ">" / "<=" / ">=" / "!=" ) expression
-                     / "in" "(" 1*expression ")"
+                     / "in" "(" arg-list ")"
                      / "~=" regex-literal
+
+    ;; Sort Clause
+
+    sort-clause      = "sort on" sort-column *( "," sort-column )
+
+    sort-column      = column-ref [ sort-order ]
+
+    sort-order       = "asc" / "desc"
 
     ;; Extension Clause
 
@@ -93,9 +106,11 @@ RFC5234):
 
     ;; Data References
 
-    data             = col-id / record
+    data             = column-id / record
 
-    col-id           = "$" 1*DIGIT  ; 1-indexed
+    column-id        = "$" 1*DIGIT  ; 1-indexed
+
+    column-ref       = "%" 1*DIGIT  ; 1-indexed of output columns
 
     record           = "$0"
 
@@ -115,21 +130,21 @@ RFC5234):
 
     regex-literal    = "/" <PCRE Definition> "/"
 
+    symbol_literal   = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
+
     ;; Miscellaneous
 
     comment          = "#" <Everything until EOL>
 
     escaping         = "\" ( "n" \ "t" \ "\" \ "r" \ DQUOTE \ "u" 2*6HEXDIG )
 
-    ; Prefix functions must be symbols, but not reserved words
-    ; Symbols are case-sensitive; reserved words are not
-    symbol_literal   = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
-
-    reserved_words   = "as" / "from" / "split by" / "when" / "and" / "or" / "in" / "using"
-
 A more complete description can [one day] be found in the documentation.
 
 Notes:
+
+* All keywords (except registered functions) are case-insensitive.
+  Whitespace rules aren't mentioned above, but follow normal/familiar
+  expectations.
 
 * The `out-list` must contain at least one aggregation function,
   appropriately applied.
@@ -152,10 +167,6 @@ Notes:
 * All column data comes in as a string, but duck typed when used in,
   say, a comparator according to the literal. [Write up how type
   coercion should work...]
-
-* [Note about having to use brackets when there's ambiguity in the
-  parse, because there are no delimiters... Should there be
-  delimiters?... Need binding precedence rules, if not...]
 
 * There is no equivalent of the SQL `having` clause as `stag` is
   designed for interactive use, inasmuch as it provides a live
@@ -183,18 +194,18 @@ Let's say your input looks like this:
 
 Then the following:
 
-    stag '$2 max $1 as "Latest" when not $2 = "127.0.0.1"'
+    stag '$2, max($1) as "Latest" when not $2 = "127.0.0.1"'
 
 Would show the latest hit timestamp, by IP address, for any non-local
 connection. Or, say, if you wanted to see the total hit count bucketed
 by hour:
 
-    stag 'extract_hour $1 as "Hour" sum $2 as "Hits"'
+    stag 'extract_hour($1) as "Hour", sum($2) as "Hits"'
 
 Alternatively, if you have some text file named `foo.txt`, the following
 will have the same result as `wc -l`:
 
-    stag 'count $0 from "foo.txt"'
+    stag 'count($0) from "foo.txt"'
 
 [Think of more/better examples!... Better yet, acquire potential use
 cases and see if the language is sufficiently expressive to fulfil their
