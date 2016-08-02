@@ -1,0 +1,203 @@
+% Copyright (c) 2016 Genome Research Ltd.
+% 
+% Author: Christopher Harrison <ch12@sanger.ac.uk>
+% 
+% This file is part of stag.
+% 
+% stag is free software: you can redistribute it and/or modify it under
+% the terms of the GNU General Public License as published by the Free
+% Software Foundation, either version 3 of the License, or (at your
+% option) any later version.
+% 
+% This program is distributed in the hope that it will be useful, but
+% WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+% General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+\section{Grammar}
+
+This section illustrates the formal grammar of the \stag\ language using
+syntax diagrams. Additional descriptive notes are included where clarity
+is needed. By convention, arbitrary whitespace can interpose nodes;
+where this isn't the case, it will be mentioned explicitly.
+
+Terminal nodes, where not otherwise defined, are per the ABNF
+specification\cite{RFC5234}.
+
+\subsection{Literals}
+
+Literals symbolise the serialisation of data in the various types that
+are representable in the \stag\ language. In all cases, whitespace is
+meaningful and generally shouldn't appear between nodes.
+
+\begin{grammar}
+  <data-literal> ::= \begin{syntdiag}
+    \begin{stack}
+      <numeric-literal> \\
+      <string-literal> \\
+      <datetime-literal> \\
+      <regexp-literal>
+    \end{stack}
+  \end{syntdiag}
+
+  <symbol-literal> ::= \begin{syntdiag}
+    \begin{stack}
+      <ALPHA> \\
+      `_'
+    \end{stack}
+    \begin{rep}
+      \begin{stack}
+        <ALPHA> \\
+        <DIGIT> \\
+        `_'
+      \end{stack}
+    \end{rep}
+  \end{syntdiag}
+\end{grammar}
+
+\subsubsection{Numeric Literals}
+
+Numeric literals can encode integers and floating point numbers to
+arbitrary precision. Their actual value may be truncated, upon
+deserialisation, according to the semantics of the numeric type [REF].
+
+\begin{grammar}
+  <integer> ::= \begin{syntdiag}
+    \begin{stack}
+      `-' \\
+    \end{stack}
+    \begin{rep}
+      <DIGIT>
+    \end{rep}
+  \end{syntdiag}
+
+  <number> ::= \begin{syntdiag}
+    <integer>
+    \begin{stack}
+      `.' \begin{rep}<DIGIT>\end{rep} \\
+    \end{stack}
+  \end{syntdiag}
+
+  <numeric-literal> ::= \begin{syntdiag}
+    <number>
+    \begin{stack}
+      `e' <number> \\
+    \end{stack}
+  \end{syntdiag}
+\end{grammar}
+
+So called ``scientific notation'' may be used to express orders of
+magnitude using the `e` infix. This may appear in either lower or upper
+case.
+
+\subsubsection{String Literals}
+
+\begin{grammar}
+  <string-literal> ::= \begin{syntdiag}
+    <DQUOTE>
+    <escaped-string>
+    <DQUOTE>
+  \end{syntdiag}
+\end{grammar}
+
+A string literal consists of a sequence of bytes, enclosed by double
+quote characters. The byte data should be understood as UTF-8 encoded
+Unicode codepoints. The data can contain special characters, such as the
+double quote delimiters, by escaping them with a backslash. The
+following escape sequences should be recognised:
+
+\begin{grammar}
+  <escape-sequence> ::= \begin{syntdiag}
+    `\textbackslash'
+    \begin{stack}
+      `n' \\
+      `r' \\
+      `t' \\
+      `\textbackslash' \\
+      <DQUOTE> \\
+      `u' <unicode-codepoint> `;'
+    \end{stack}
+  \end{syntdiag}
+\end{grammar}
+
+From top-to-bottom, these represent a newline, carriage return,
+horizontal tab, backslash and double quote character, respectively.
+Explicit Unicode codepoints can be serialised using the `u' escape
+sequence followed by 2--6 hexadecimal digits (case-insensitive) and a
+terminating semicolon.
+
+\subsubsection{Datetime Literals}
+
+\begin{grammar}
+  <datetime-literal> ::= \begin{syntdiag}
+    <DQUOTE>
+    \begin{stack}
+      <date-time> \\
+      <full-time> \\
+      <partial-time> \\
+      <full-date>
+    \end{stack}
+    <DQUOTE>
+  \end{syntdiag}
+\end{grammar}
+
+Datetime literals consist of a sequence of bytes, enclosed by double
+quote characters. The byte data should be understood per the specific
+rules defined in RFC3339\cite{RFC3339}.
+
+\subsubsection{Regular Expression Literals}
+
+\begin{grammar}
+  <regex-literal> ::= \begin{syntdiag}
+    `/'
+    <pcre-definition>
+    `/'
+  \end{syntdiag}
+\end{grammar}
+
+Regular expression literals consist of a sequence of bytes, enclosed by
+forward slash characters. The byte data should be understood as a PCRE,
+with normal escaping rules.
+
+% \begin{grammar}
+% <statement> ::= \begin{syntdiag}
+%     <out-list>
+%     \begin{stack}
+%       <from-clause> \\
+%     \end{stack}
+%     \begin{stack}
+%       <split-clause> \\
+%     \end{stack}
+%     \begin{stack}
+%       <when-clause> \\
+%     \end{stack}
+%     \begin{stack}
+%       <sort-clause> \\
+%     \end{stack}
+%     \begin{stack}
+%       <extend-clause> \\
+%     \end{stack}
+%   \end{syntdiag}
+% 
+%   <out-list> ::= \begin{syntdiag}
+%     <out-column>
+%     \begin{rep}
+%       `,' <out-column>
+%     \end{rep}
+%   \end{syntdiag}
+% 
+%   <out-column> ::= \begin{syntdiag}
+%     <expression>
+%     \begin{stack}
+%       <alias> \\
+%     \end{stack}
+%   \end{syntdiag}
+% 
+%   <alias> ::= \begin{syntdiag}
+%     `as'
+%     <string-literal>
+%   \end{syntdiag}
+% \end{grammar}
