@@ -27,6 +27,42 @@ where this isn't the case, it will be mentioned explicitly.
 Terminal nodes, where not otherwise defined, are per the ABNF
 specification\cite{RFC5234}.
 
+\subsection{\stag\ Statement}
+
+The top-level node for all programmatic constructs is the \stag\
+statement. This is presented first, but thereafter we build upwards to
+ultimately arrive at definitions for each clause.
+
+\begin{grammar}
+  <statement> ::= \begin{syntdiag}
+    <out-list>
+    \begin{stack}
+      <from-clause> \\
+    \end{stack}
+    \begin{stack}
+      <split-clause> \\
+    \end{stack}
+    \begin{stack}
+      <when-clause> \\
+    \end{stack}
+    \begin{stack}
+      <sort-clause> \\
+    \end{stack}
+    \begin{stack}
+      <extend-clause> \\
+    \end{stack}
+  \end{syntdiag}
+
+  <comment> ::= \begin{syntdiag}
+    `#'
+    <to-eol>
+  \end{syntdiag}
+\end{grammar}
+
+Line comments can be interposed anywhere between nodes and extend until
+the end of the line on which they're placed. During parsing, they should
+be reduced to a single whitespace element.
+
 \subsection{Literals}
 
 Literals symbolise the serialisation of data in the various types that
@@ -162,42 +198,255 @@ Regular expression literals consist of a sequence of bytes, enclosed by
 forward slash characters. The byte data should be understood as a PCRE,
 with normal escaping rules.
 
-% \begin{grammar}
-% <statement> ::= \begin{syntdiag}
-%     <out-list>
-%     \begin{stack}
-%       <from-clause> \\
-%     \end{stack}
-%     \begin{stack}
-%       <split-clause> \\
-%     \end{stack}
-%     \begin{stack}
-%       <when-clause> \\
-%     \end{stack}
-%     \begin{stack}
-%       <sort-clause> \\
-%     \end{stack}
-%     \begin{stack}
-%       <extend-clause> \\
-%     \end{stack}
-%   \end{syntdiag}
-% 
-%   <out-list> ::= \begin{syntdiag}
-%     <out-column>
-%     \begin{rep}
-%       `,' <out-column>
-%     \end{rep}
-%   \end{syntdiag}
-% 
-%   <out-column> ::= \begin{syntdiag}
-%     <expression>
-%     \begin{stack}
-%       <alias> \\
-%     \end{stack}
-%   \end{syntdiag}
-% 
-%   <alias> ::= \begin{syntdiag}
-%     `as'
-%     <string-literal>
-%   \end{syntdiag}
-% \end{grammar}
+\subsection{Data References}
+
+Input data can be referenced by field index (one-based), or the entire
+record.
+
+\begin{grammar}
+  <data> ::= \begin{syntdiag}
+    \begin{stack}
+      <column-id> \\
+      <record>
+    \end{stack}
+  \end{syntdiag}
+
+  <column-id> ::= \begin{syntdiag}
+    `\$'
+    \begin{rep}
+      <DIGIT>
+    \end{rep}
+  \end{syntdiag}
+
+  <record> ::= \begin{syntdiag}
+    `\$0'
+  \end{syntdiag}
+
+  <column-ref> ::= \begin{syntdiag}
+    `\%'
+    \begin{rep}
+      <DIGIT>
+    \end{rep}
+  \end{syntdiag}
+\end{grammar}
+
+Note that there must be no whitespace interposed within a column
+identifier or reference.
+
+\subsection{Expressions}
+
+An expression represents anything that can be evaluated to a scalar
+value, taking potentially scalar or vector input.
+
+\begin{grammar}
+  <expression> ::= \begin{syntdiag}
+    \begin{stack}
+      <expr-block> \\
+      `(' <expr-block> `)'
+    \end{stack}
+  \end{syntdiag}
+
+  <expr-block> ::= \begin{syntdiag}
+    \begin{stack}
+      <data> \\
+      <data-literal> \\
+      <expression> <operator> <expression> \\
+      <function>
+    \end{stack}
+  \end{syntdiag}
+
+  <operator> ::= \begin{syntdiag}
+    \begin{stack}
+      `+' \\
+      `-' \\
+      `*' \\
+      `/' \\
+      `\%' \\
+      `^'
+    \end{stack}
+  \end{syntdiag}
+
+  <function> ::= \begin{syntdiag}
+    <symbol-literal>
+    `('
+    \begin{stack}
+      <arg-list> \\
+    \end{stack}
+    `)'
+  \end{syntdiag}
+
+  <arg-list> ::= \begin{syntdiag}
+    <expression>
+    \begin{stack}
+      \begin{rep}`,' <expression>\end{rep} \\
+    \end{stack}
+  \end{syntdiag}
+\end{grammar}
+
+Note that there must be no whitespace interposed between a function's
+symbolic name and the opening parenthesis for its calling arguments.
+
+\subsection{Output List}
+
+The output list defines the columns in the final output; it must be
+present in the \stag\ statement.
+
+\begin{grammar}
+  <out-list> ::= \begin{syntdiag}
+    <out-column>
+    \begin{stack}
+      \begin{rep}`,' <out-column>\end{rep} \\
+    \end{stack}
+  \end{syntdiag}
+
+  <out-column> ::= \begin{syntdiag}
+    <expression>
+    \begin{stack}
+      `as' <string-literal> \\
+    \end{stack}
+  \end{syntdiag}
+\end{grammar}
+
+Note that the output list must contain at least one aggregate column
+(i.e., using a vector function).
+
+\subsection{\texttt{from} Clause}
+
+The \texttt{from} clause defines the input source. If omitted, the input
+defaults to \texttt{stdin}.
+
+\begin{grammar}
+  <from-clause> ::= \begin{syntdiag}
+    `from'
+    \begin{stack}
+      <filepath> \\
+      <fd>
+    \end{stack}
+  \end{syntdiag}
+
+  <filepath> ::= \begin{syntdiag}
+    <string-literal>
+  \end{syntdiag}
+
+  <fd> ::= \begin{syntdiag}
+    `\&'
+    \begin{rep}
+      <DIGIT>
+    \end{rep}
+  \end{syntdiag}
+\end{grammar}
+
+Note that there must be no whitespace interposed within a file
+descriptor.
+
+\subsection{\texttt{split by} Clause}
+
+The \texttt{split by} clause defines how input lines are to be split
+into fields. If omitted, the line is split by horizontal tabs or
+multiple whitespace (i.e.,
+\texttt{/\textbackslash{}t|\textbackslash{}s\{2,\}/}).
+
+\begin{grammar}
+  <split-clause> ::= \begin{syntdiag}
+    `split' `by' <regex-literal>
+  \end{syntdiag}
+\end{grammar}
+
+\subsection{\texttt{when} Clause}
+
+The \texttt{when} clause defines conditions that filter the input data.
+There is no equivalent to SQL's \texttt{having} clause as \stag\ is
+intended for continuous operation.\footnote{As a non-terminal element of
+a Unix pipeline, presuming the input stream terminates, \texttt{awk}
+could be used to emulate the \texttt{having} clause.}
+
+\begin{grammar}
+  <when-clause> ::= \begin{syntdiag}
+    `when'
+    <condition>
+  \end{syntdiag}
+
+  <condition> ::= \begin{syntdiag}
+    \begin{stack}
+      <logic-block> \\
+      `(' <logic-block> `)'
+    \end{stack}
+  \end{syntdiag}
+
+  <logic-block> ::= \begin{syntdiag}
+    <predicate>
+    \begin{stack}
+      \begin{rep}<junction> <condition>\end{rep} \\
+    \end{stack}
+  \end{syntdiag}
+
+  <junction> ::= \begin{syntdiag}
+    \begin{stack}
+      `and' \\
+      `or'
+    \end{stack}
+  \end{syntdiag}
+
+  <predicate> ::= \begin{syntdiag}
+    \begin{stack}
+      `not' \\
+    \end{stack}
+    <expression>
+    <test>
+  \end{syntdiag}
+
+  <test> ::= \begin{syntdiag}
+    \begin{stack}
+      \begin{stack}
+        `=' \\
+        `<' \\
+        `>' \\
+        `<=' \\
+        `>=' \\
+        `!='
+      \end{stack} <expression> \\
+      `in' `(' <arg-list> `)' \\
+      `~=' <regex-literal>
+    \end{stack}
+  \end{syntdiag}
+\end{grammar}
+
+\subsection{\texttt{sort} Clause}
+
+\begin{grammar}
+  <sort-clause> ::= \begin{syntdiag}
+    `sort' `on'
+    <sort-column>
+    \begin{stack}
+      \begin{rep}`,' <sort-column>\end{rep} \\
+    \end{stack}
+  \end{syntdiag}
+
+  <sort-column> ::= \begin{syntdiag}
+    <column-ref>
+    \begin{stack}
+      `asc' \\
+      `desc' \\
+    \end{stack}
+  \end{syntdiag}
+\end{grammar}
+
+If not specified, data will be presented on a first-come first-served
+basis. If column sorting is specified with no ordering, then data will
+be sorted in ascending order by default.
+
+% TODO Collation rules?
+
+\subsection{Extension Clause}
+
+Additional scalar and vector functions to those defined herein may be
+imported using the extension clause.
+
+\begin{grammar}
+  <extend-clause> ::= \begin{syntdiag}
+    `using'
+    \begin{rep}
+      <filepath>
+    \end{rep}
+  \end{syntdiag}
+\end{grammar}
