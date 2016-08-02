@@ -21,8 +21,9 @@
 
 This section illustrates the formal grammar of the \stag\ language using
 syntax diagrams. Additional descriptive notes are included where clarity
-is needed. By convention, arbitrary whitespace can interpose nodes;
-where this isn't the case, it will be mentioned explicitly.
+is needed. By convention, arbitrary whitespace can interpose nodes and
+all keywords (i.e., non-literals) are case-insensitive; wherever this
+isn't the case, it will be mentioned explicitly.
 
 Terminal nodes, where not otherwise defined, are per the ABNF
 specification\cite{RFC5234}.
@@ -31,7 +32,11 @@ specification\cite{RFC5234}.
 
 The top-level node for all programmatic constructs is the \stag\
 statement. This is presented first, but thereafter we build upwards to
-ultimately arrive at definitions for each clause.
+ultimately arrive at definitions for each clause. The \stag\ statement
+is closely modelled on an SQL \texttt{select \ldots\ group by \ldots}
+statement, with the principle difference of not having a \texttt{group
+by} clause of its own as it can be inferred from the scalar columns in
+the output.
 
 \begin{grammar}
   <statement> ::= \begin{syntdiag}
@@ -126,8 +131,7 @@ deserialisation, according to the semantics of the numeric type [REF].
 \end{grammar}
 
 So called ``scientific notation'' may be used to express orders of
-magnitude using the `e` infix. This may appear in either lower or upper
-case.
+magnitude using the `e` infix.
 
 \subsubsection{String Literals}
 
@@ -162,8 +166,8 @@ following escape sequences should be recognised:
 From top-to-bottom, these represent a newline, carriage return,
 horizontal tab, backslash and double quote character, respectively.
 Explicit Unicode codepoints can be serialised using the `u' escape
-sequence followed by 2--6 hexadecimal digits (case-insensitive) and a
-terminating semicolon.
+sequence followed by 2--6 hexadecimal digits and a terminating
+semicolon.
 
 \subsubsection{Datetime Literals}
 
@@ -358,7 +362,7 @@ The \texttt{when} clause defines conditions that filter the input data.
 There is no equivalent to SQL's \texttt{having} clause as \stag\ is
 intended for continuous operation.\footnote{As a non-terminal element of
 a Unix pipeline, presuming the input stream terminates, \texttt{awk}
-could be used to emulate the \texttt{having} clause.}
+could be used downstream to emulate the \texttt{having} clause.}
 
 \begin{grammar}
   <when-clause> ::= \begin{syntdiag}

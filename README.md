@@ -23,161 +23,14 @@ until its input's EOF is reached, or it is terminated with Ctrl+D.
 `stag` expects records to be EOL delimited (i.e., record-per-line), with
 no additional "decoration" around records or fields. If that is not the
 case, `sed` could be interposed to munge the input into the correct
-format (for example, if parsing a CSV file, `sed` could strip leading
+format (for example, if parsing a CSV input, `sed` could strip leading
 and trailing quotes, if any, and `stag`'s field separator could be set
 to `/"?,"?/`).
 
-## `stag` Language
+For a full description of the `stag` language, please refer to the
+formal specification. Otherwise, herein follows illustrative examples:
 
-A `stag` statement is not dissimilar to an SQL `select ... group by ...`
-statement. The grammar is defined using the following ABNF (per
-RFC5234):
-
-    ;; stag Statement
-
-    statement        = out-list
-                       [ from-clause ]
-                       [ split-clause ]
-                       [ when-clause ]
-                       [ sort-clause ]
-                       [ extend-clause ]
-
-    ;; Output List
-
-    out-list         = out-column *( "," out-column )
-
-    out-column       = expression [ alias ]
-
-    alias            = "as" string-literal 
-
-    expression       = expr-block / "(" expr-block ")"
-
-    expr-block       = data
-                     / literal
-                     / prefix-fn
-                     / expression infix-fn expression
-
-    prefix-fn        = symbol_literal "(" [ arg_list ] ")"
-
-    arg-list         = expression *( "," expression )
-
-    infix-fn         = "+"  ; Addition / Concatenation
-                     / "-" / "*" / "/" / "%" / "^"  ; Arithmetic
-
-    ;; From Clause
-
-    from-clause      = "from" ( filepath / fd )
-  
-    filepath         = string-literal
-
-    fd               = "&" 1*DIGIT
-
-    ;; Split By Clause
-
-    split-clause     = "split by" regex-literal
-
-    ;; When Clause
-
-    when-clause      = "when" condition
-
-    condition        = logic-block / "(" logic-block ")"
-
-    logic-block      = predicate *( junction condition )
-
-    junction         = "and" / "or"
-
-    predicate        = [ "not" ] expression test
-
-    test             = ( "=" / "<" / ">" / "<=" / ">=" / "!=" ) expression
-                     / "in" "(" arg-list ")"
-                     / "~=" regex-literal
-
-    ;; Sort Clause
-
-    sort-clause      = "sort on" sort-column *( "," sort-column )
-
-    sort-column      = column-ref [ sort-order ]
-
-    sort-order       = "asc" / "desc"
-
-    ;; Extension Clause
-
-    extend-clause    = "using" 1*filepath
-
-    ;; Data References
-
-    data             = column-id / record
-
-    column-id        = "$" 1*DIGIT  ; 1-indexed
-
-    column-ref       = "%" 1*DIGIT  ; 1-indexed of output columns
-
-    record           = "$0"
-
-    ;; Literals
-
-    literal          = numeric-literal / string-literal / datetime-literal / regex-literal
-
-    numeric-literal  = number [ "e" number ]
-
-    number           = integer [ "." 1*DIGIT ]
-
-    integer          = [ "-" ] 1*DIGIT
-
-    string-literal   = DQUOTE <Escaped String> DQUOTE
-
-    datetime-literal = DQUOTE <Timestamp per RFC3339> DQUOTE
-
-    regex-literal    = "/" <PCRE Definition> "/"
-
-    symbol_literal   = ( ALPHA / "_" ) *( ALPHA / DIGIT / "_" )
-
-    ;; Miscellaneous
-
-    comment          = "#" <Everything until EOL>
-
-    escaping         = "\" ( "n" \ "t" \ "\" \ "r" \ DQUOTE \ "u" 2*6HEXDIG )
-
-A more complete description can [one day] be found in the documentation.
-
-Notes:
-
-* All keywords (except registered functions) are case-insensitive.
-  Whitespace rules aren't mentioned above, but follow normal/familiar
-  expectations.
-
-* The `out-list` must contain at least one aggregation function,
-  appropriately applied.
-
-* Unlike SQL, there is no `group by` clause, as this can be inferred
-  from the `out-list`. If scalar columns form part of the `out-list`
-  then these define the grouping tuple; otherwise, aggregation will be
-  applied to all records.
-
-* If the `from-clause` is omitted, then it defaults to `from &0` (i.e.,
-  read from stdin).
-
-* If the `split-clause` is omitted, then it defaults to
-  `split by /\t|\s{2,}/` (i.e., split on tabs or two-or-more
-  whitespaces).
-
-* Date/time stamps are per RFC3339, using any of the rules: `date-time`,
-  `full-time`, `partial-time` or `full-date`.
-
-* All column data comes in as a string, but duck typed when used in,
-  say, a comparator according to the literal. [Write up how type
-  coercion should work...]
-
-* There is no equivalent of the SQL `having` clause as `stag` is
-  designed for interactive use, inasmuch as it provides a live
-  aggregation of the stream. If, however, it is a non-terminal element
-  of a pipeline -- and the stream terminates -- something like `awk`
-  could be used to provide such post-aggregation filtering.
-
-* The extension clause allows the definition of custom scalar and
-  aggregation functions, imported from an external source files. [Custom
-  functions should be written in Racket?]
-
+<!--
 ### Scalar Functions
 
 #### String Functions
@@ -211,6 +64,7 @@ Function | Input Type         | Output Type        | Description
 `last`   | Any                | Any                | Last value in input
 
 [Others? Standard deviation? Median? Percentiles?...]
+-->
 
 ## Example
 
