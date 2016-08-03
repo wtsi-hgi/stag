@@ -42,7 +42,9 @@ enclosed in square brackets, to denote the vector input.
 \paragraph{\fn{+}{(Numeric, Numeric)}{Numeric}} Addition
 \paragraph{\fn{-}{(Numeric, Numeric)}{Numeric}} Subtraction
 
-\paragraph{\fn{+}{(Textual, Textual)}{Textual}} Concatenation
+\paragraph{\fn{+}{(Any, Any)}{Textual}} Concatenation\footnote{The
+\texttt{+} operator acts as concatenation, rather than addition, if
+neither input types are numeric.}
 
 \subsection{Scalar Functions}
 
