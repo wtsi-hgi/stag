@@ -19,6 +19,93 @@
 
 \section{Standard Functions}
 
+We use the following markup for function signatures:
+
+\begin{center}
+\fn{function}{input type}{output type}
+\end{center}
+
+Where a union of types are accepted, these are delineated with
+\texttt{|} characters. Conventionally, if the input and output types are
+corresponding unions, it is expected that the output type matches the
+input. Moreover, \texttt{Any} is used to denote the union of all types.
+
+For aggregate functions, the input type (or union thereof) will be
+enclosed in square brackets, to denote the vector input.
+
+\subsection{Operators}
+
+\paragraph{\fn{\^{}}{(Numeric, Numeric)}{Numeric}} Exponentiation
+\paragraph{\fn{*}{(Numeric, Numeric)}{Numeric}} Multiplication
+\paragraph{\fn{/}{(Numeric, Numeric)}{Numeric}} Division
+\paragraph{\fn{\%}{(Numeric, Numeric)}{Numeric}} Modulus
+\paragraph{\fn{+}{(Numeric, Numeric)}{Numeric}} Addition
+\paragraph{\fn{-}{(Numeric, Numeric)}{Numeric}} Subtraction
+
+\paragraph{\fn{+}{(Textual, Textual)}{Textual}} Concatenation
+
 \subsection{Scalar Functions}
 
+\subsubsection{Casting Functions}
+
+Note that the implicit typing does away with most needs to cast.
+However, if input data does not conform to \stag\ literals, then it
+could be manipulated appropriately -- as a string -- and cast to the
+correct type.
+
+\paragraph{\fn{to_text}{Any}{Textual}}
+\paragraph{\fn{to_numeric}{Textual}{Numeric}}
+\paragraph{\fn{to_datetime}{Textual}{Temporal}}
+\paragraph{\fn{to_regex}{Textual}{Regular Expression}}
+
+\subsubsection{String Functions}
+
+% TODO
+
+\subsubsection{Datetime Functions}
+
+% TODO
+
 \subsection{Aggregate Functions}
+
+\paragraph{\fn{count}{[Any]}{Numeric}}
+
+The size of the input (i.e., number of elements).
+
+\paragraph{\fn{sum}{[Numeric]}{Numeric}}
+
+The sum of the input elements.
+
+\paragraph{\fn{prod}{[Numeric]}{Numeric}}
+
+The product of the input elements.
+
+\paragraph{\fn{mean}{[Numeric]}{Numeric}}
+
+The arithmetic mean of the input elements.
+
+\paragraph{\fn{max}{[Numeric | Datetime]}{Numeric | Datetime}}
+
+The maximum element from the input.
+
+\paragraph{\fn{min}{[Numeric | Datetime]}{Numeric | Datetime}}
+
+The minimum element from the input.
+
+\paragraph{\fn{first}{[Any]}{Any}}
+
+The first element from the input.
+
+\paragraph{\fn{last}{[Any]}{Any}}
+
+The latest element in the input.
+
+% TODO? Would a tail function be more useful? i.e., Return all but the
+% first element...
+
+% TODO Others?
+% Standard deviation (population and sample)
+% Variance (population and sample)
+% Median
+% Arbitrary percentile
+% ...

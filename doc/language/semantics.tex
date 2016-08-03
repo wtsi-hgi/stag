@@ -88,6 +88,10 @@ more) different types, the lesser types will be coerced into the
 greatest. Whenever no such ordering exists (e.g., numbers and regular
 expressions), this is a type error.
 
+Note that if data is not explicitly typed (i.e., string-based input),
+then it will be implicitly typed per the grammar rules for specific
+literals.
+
 % TODO? Explain what coercion should do exactly?
 
 \subsection{Precedence and Associativity}
@@ -95,8 +99,8 @@ expressions), this is a type error.
 Precedence is listed here from highest to lowest:
 
 \begin{center}\begin{tabular}{lll}
-  Operator                            & Description                       & Associativity \\ \hline
-  \texttt{\^}                         & Exponentiation                    & Right \\
-  \texttt{*}, \texttt{/}, \texttt{\%} & Multiplication, Division, Modulus & Left \\
-  \texttt{+}, \texttt{-}              & Addition, Subtraction             & Left
+  Operator                            & Description                         & Associativity \\ \hline
+  \texttt{\^{}}                       & Exponentiation                      & Right \\
+  \texttt{*}, \texttt{/}, \texttt{\%} & Multiplication, Division, Modulus   & Left \\
+  \texttt{+}, \texttt{-}              & Addition/Concatenation, Subtraction & Left
 \end{tabular}\end{center}
