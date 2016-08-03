@@ -21,6 +21,26 @@
 
 \subsection{Grouping and Aggregation}
 
+% FIXME? This is quite unclear, or at least lacks true "formality"...
+
+Let $S$ be an input stream, where $S_1, S_2, \ldots, S_i, \ldots$
+represent each row of the stream. For every $i$, let $S_i=(C_{i,1},
+C_{i,2}, \ldots, C_{i,n})$ represent the column data in that row. (Note
+that if the row does not contain any split points, $C_{i,1}$ will always
+exist.) Let $C_{(j)}=(C_{1,j}, C_{2,j}, \ldots)$ represent the tuple of
+column data from the stream at index $j$.
+
+For $m\geq 1$, let $O=(O_1, O_2, \ldots, O_m)$ define the output
+columns. Without loss of generality, $\exists k\in\{1, \ldots, m\}$
+such that, $\forall i\leq k$, $O_i$ is a function of at least $C_{(a)}$,
+for some $a\in\{1, \ldots, n\}$. (Note that the aggregate functions
+could potentially involve multiple column tuples.)
+
+If $k<m$, then let the grouping tuple for each stream row $i$ be defined
+as $G_i=(O_{k+1}, \ldots, O_m)$; if $k=m$, then let $G_i=S_i$. The
+unsorted output is then given by $S$ applied to $O$, partitioned by
+$\{G_i | \forall i\}$.
+
 \subsection{Typing Discipline}
 
 All input data comes in the form of strings. Type coercion rules apply
