@@ -33,6 +33,11 @@ input. Moreover, \texttt{Any} is used to denote the union of all types.
 For aggregate functions, the input type (or union thereof) will be
 enclosed in square brackets, to denote the vector input.
 
+If a function accepts multiple parameters, then they will be presented
+as a tuple, enclosed in parentheses. In the special case of operators,
+there is no markup to denote that they are effectively dyadic infix
+functions; we instead take that as convention.
+
 \subsection{Operators}
 
 \paragraph{\fn{\^{}}{(Numeric, Numeric)}{Numeric}} Exponentiation
