@@ -52,11 +52,28 @@ make this process explicit.)
 
 \paragraph{Numeric}
 
+There are two numeric data types: arbitrary precision integers and
+floating point numbers of at least the fidelity of a C \texttt{double}
+on the target architecture.
+
 \paragraph{Textual}
+
+Textual data is stored as a fixed-length array of bytes, which represent
+Unicode codepoints encoded in UTF-8.
 
 \paragraph{Temporal}
 
+% TODO? Is this enough to go on?
+
+Temporal data is stored as a combination of date and/or time, with or
+without timezone information, to at least millisecond accuracy.
+
 \paragraph{Regular Expressions}
+
+% TODO? Is this enough to go on?
+
+Perl compatible regular expressions should be compiled and stored in
+memory.
 
 \subsubsection{Type Coercion}
 
