@@ -77,4 +77,19 @@ memory.
 
 \subsubsection{Type Coercion}
 
+The types form the following partial ordering:
+
+$$\textrm{Integer} < \textrm{Floating Point} < \textrm{Textual}$$
+
+$$\textrm{Integer} < \textrm{Temporal} < \textrm{Textual}$$
+
+$$\textrm{Regular Expression} < \textrm{Textual}$$
+
+That is to say, whenever a function is applied to data from two (or
+more) different types, the lesser types will be coerced into the
+greatest. Whenever no such ordering exists (e.g., numbers and regular
+expressions), this is a type error.
+
+% TODO? Explain what coercion should do exactly?
+
 \subsection{Precedence and Associativity}
