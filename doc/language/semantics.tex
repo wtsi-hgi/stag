@@ -37,7 +37,7 @@ for some $a\in\{1, \ldots, n\}$. (Note that the aggregate functions
 could potentially involve multiple column tuples.)
 
 If $k<m$, then let the grouping tuple for each stream row $i$ be defined
-as $G_i=(O_{k+1}, \ldots, O_m)$; if $k=m$, then let $G_i=S_i$. The
+as $G_i=(O_{k+1}, \ldots, O_m)$; if $k=m$, then let $G_i=i$. The
 unsorted output is then given by $S$ applied to $O$, partitioned by
 $\{G_i | \forall i\}$.
 
