@@ -30,43 +30,7 @@ to `/"?,"?/`).
 For a full description of the `stag` language, please refer to the
 formal specification. Otherwise, herein follows illustrative examples:
 
-<!--
-### Scalar Functions
-
-#### String Functions
-
-* `length(INPUT)` String length [Normalised Unicode characters? Bytes?]
-* `substring(INPUT, X, Y)`
-* ...
-
-[Do we assume all input is UTF8?]
-
-#### Mathematical Functions
-
-* ...
-
-#### Datetime Functions
-
-* ...
-
-[Others? Conditional expressions, like SQL CASE?...]
-
-### Aggregation Functions
-
-Function | Input Type         | Output Type        | Description
--------- | ------------------ | ------------------ | -------------------
-`count`  | Any                | Numeric            | Count of input
-`sum`    | Numeric            | Numeric            | Sum of input
-`mean`   | Numeric            | Numeric            | Arithmetic mean of input
-`max`    | Numeric / Datetime | Numeric / Datetime | Maximum input
-`min`    | Numeric / Datetime | Numeric / Datetime | Minimum input
-`first`  | Any                | Any                | First value in input
-`last`   | Any                | Any                | Last value in input
-
-[Others? Standard deviation? Median? Percentiles?...]
--->
-
-## Example
+## Examples
 
 Let's say your input looks like this:
 
