@@ -80,9 +80,7 @@ memory.
 The types form the following partial ordering:
 
 $$\textrm{Integer} < \textrm{Floating Point} < \textrm{Textual}$$
-
 $$\textrm{Integer} < \textrm{Temporal} < \textrm{Textual}$$
-
 $$\textrm{Regular Expression} < \textrm{Textual}$$
 
 That is to say, whenever a function is applied to data from two (or
@@ -93,3 +91,12 @@ expressions), this is a type error.
 % TODO? Explain what coercion should do exactly?
 
 \subsection{Precedence and Associativity}
+
+Precedence is listed here from highest to lowest:
+
+\begin{center}\begin{tabular}{lll}
+  Operator                            & Description                       & Associativity \\ \hline
+  \texttt{\^}                         & Exponentiation                    & Right \\
+  \texttt{*}, \texttt{/}, \texttt{\%} & Multiplication, Division, Modulus & Left \\
+  \texttt{+}, \texttt{-}              & Addition, Subtraction             & Left
+\end{tabular}\end{center}
