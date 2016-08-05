@@ -173,20 +173,19 @@ semicolon.
 
 \begin{grammar}
   <datetime-literal> ::= \begin{syntdiag}
-    <DQUOTE>
+    `@'
     \begin{stack}
       <date-time> \\
       <full-time> \\
       <partial-time> \\
       <full-date>
     \end{stack}
-    <DQUOTE>
   \end{syntdiag}
 \end{grammar}
 
-Datetime literals consist of a sequence of bytes, enclosed by double
-quote characters. The byte data should be understood per the specific
-rules defined in RFC3339\cite{RFC3339}.
+Datetime literals consist of a sequence of bytes, with a prefixed at
+symbol sigil. The byte data should be understood per the specific rules
+defined in RFC3339\cite{RFC3339}.
 
 \subsubsection{Regular Expression Literals}
 
