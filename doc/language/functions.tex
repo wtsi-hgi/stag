@@ -75,6 +75,12 @@ correct type.
 
 \subsection{Aggregate Functions}
 
+Note that aggregate functions work on the basis of running computation,
+rather than collecting values and continuously recomputing the summary
+statistic. This is for economy's sake, in terms of computation and
+memory usage. Extensions could potentially flaunt this convention (e.g.,
+using a closure to cache data), but it is not recommended practice.
+
 \paragraph{\fn{count}{[Any]}{Numeric}}
 
 The size of the input (i.e., number of elements).
@@ -91,6 +97,10 @@ The product of the input elements.
 
 The arithmetic mean of the input elements.
 
+\paragraph{\fn{stddev}{[Numeric]}{Numeric}}
+
+The (sample) standard deviation of the input elements.
+
 \paragraph{\fn{max}{[Numeric | Datetime]}{Numeric | Datetime}}
 
 The maximum element from the input.
@@ -106,13 +116,3 @@ The first element from the input.
 \paragraph{\fn{last}{[Any]}{Any}}
 
 The latest element in the input.
-
-% TODO? Would a tail function be more useful? i.e., Return all but the
-% first element...
-
-% TODO Others?
-% Standard deviation (population and sample)
-% Variance (population and sample)
-% Median
-% Arbitrary percentile
-% ...
