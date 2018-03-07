@@ -20,6 +20,12 @@ as part of a Unix pipeline. It can be used to read from different
 sources, by specifying as such in the `stag` statement. `stag` will run
 until its input's EOF is reached, or it is terminated with Ctrl+D.
 
+When connected to a TTY, output is presented using a text-mode user 
+interface (something akin to `top`), whereas when outputting to a 
+non-TTY (or when an option specifies batch output), output would be 
+flushed to stdout at a specified time interval (perhaps a default of 2s 
+would be reasonable to match that of `watch`). 
+
 `stag` expects records to be EOL delimited (i.e., record-per-line), with
 no additional "decoration" around records or fields. If that is not the
 case, `sed` could be interposed to munge the input into the correct
